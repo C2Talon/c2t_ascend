@@ -20,3 +20,9 @@ To remove, run the following:
 
 `git remove C2Talon-c2t_ascend-master`
 
+## Bugs?
+
+There may be some paths that this doesn't know how to enter valhalla. Report it in the issues tab so I can know about it and maybe figure it out.
+
+Also, report any other issues in the issues tab as well.
+
