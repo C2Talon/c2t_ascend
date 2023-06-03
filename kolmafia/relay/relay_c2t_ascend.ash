@@ -10,17 +10,17 @@ boolean postError = false;
 
 void c2t_ascend_writeText(string tag,string s);
 void c2t_ascend_writeInput(string name,string value,string desc,int size,int max);
-void c2t_ascend_writeSelect(string name,string desc,string [int] options,string dfault);
+void c2t_ascend_writeSelect(string name,string desc,string [int] options,int value);
 void c2t_ascend_writeFailSuccess();
 void c2t_ascend_writeTh(string a, string b, string c);
 
 void main() {
-	string [string] settings;
+	int [string] settings;
 
 	//handle things submitted
 	if (POST.count() > 1) {
 		foreach i,x in c2t_ascend_data
-			settings[x.name] = POST[x.name];
+			settings[x.name] = POST[x.name].to_int();
 		if (!c2t_ascend_check(settings))
 			postError = true;
 		if (!postError)
@@ -30,7 +30,7 @@ void main() {
 		settings = c2t_ascend_getSettings();
 	else
 		foreach i,x in c2t_ascend_data
-			settings[x.name] = "0";
+			settings[x.name] = 0;
 
 	//header
 	write('<!DOCTYPE html><html lang="EN"><head><title>c2t_ascend Settings</title>');
@@ -79,11 +79,11 @@ void c2t_ascend_writeInput(string name,string value,string desc,int size,int max
 	write("</tr>");
 }
 
-void c2t_ascend_writeSelect(string name,string desc,string [int] options,string dfault) {
+void c2t_ascend_writeSelect(string name,string desc,string [int] options,int value) {
 	write(`<tr><td class="right"><select name="{name}" id="{name}" class="right">`);
 	foreach i,x in options {
 		write(`<option value="{i}"`);
-		if (dfault.to_int() == i)
+		if (value == i)
 			write(" selected");
 		write(`>{x}</option>`);
 	}
