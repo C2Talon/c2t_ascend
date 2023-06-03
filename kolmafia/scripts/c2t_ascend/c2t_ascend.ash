@@ -33,6 +33,7 @@ string [int] c2t_ascend_gender() {
 
 string [int] c2t_ascend_path() {
 	string [int] out;
+	out[0] = "no path";
 	foreach x in $paths[]
 		out[x.id] = x.name;
 	return out;
