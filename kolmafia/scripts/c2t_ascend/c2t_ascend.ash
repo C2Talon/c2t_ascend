@@ -72,9 +72,9 @@ c2t_ascend_field [int] c2t_ascend_data = {
 
 void main() {
 	int [string] a = c2t_ascend_getSettings();
-	int permMult = a["Perm"].to_int();
-	string permAll = permMult == 1?"sc":permMult == 2?"hc":"";
-	int thresh = a["Karma"].to_int();
+	int multi = a["Perm"];
+	string perm = multi == 1?"sc":multi == 2?"hc":"";
+	int threshold = a["Karma"];
 
 	if (get_property("kingLiberated").to_boolean()) {
 		print("c2t_ascend: attempting to enter valhalla");
@@ -107,23 +107,25 @@ void main() {
 		visit_url(`afterlife.php?action=buyarmory&whichitem={a["Pet"]}`,true,true);
 
 	//hc perm all the skills; assumes enough karma to cover costs
-	if (permAll == "hc" || permAll == "sc") {
+	if (perm == "hc" || perm == "sc") {
 		buffer buf = visit_url("afterlife.php?place=permery",false,true);
 		string [int] hcsc = xpath(buf,'//form[@action="afterlife.php"]//input[@name="action"]/@value');
 		string [int] skil = xpath(buf,'//form[@action="afterlife.php"]//input[@name="whichskill"]/@value');
 		int size = skil.count();
 		if (size > 0) {
-			print(`Perming all {permAll.to_upper_case()} skills:`,"blue");
+			print(`c2t_ascend: perming all {c2t_ascend_data[7].data[multi]} skills`);
 			for i from 0 to size-1 {
-				if (get_property("bankedKarma").to_int() - 100 * permMult < thresh) {
+				if (get_property("bankedKarma").to_int() - 100 * multi < threshold) {
 					print("c2t_ascend: perming another skill would put karma below the threshold, so stopping");
 					break;
 				}
-				if (hcsc[i] == `{permAll}perm`)
+				if (hcsc[i] == `{perm}perm`)
 					visit_url(`afterlife.php?action={hcsc[i]}&whichskill={skil[i]}`,true,true);
 			}
 		}
 	}
+
+	print("c2t_ascend: leaving valhalla");
 
 	//ascend
 	visit_url(`afterlife.php?pwd&action=ascend&confirmascend=1&whichsign={a["Moon"]}&gender={a["Gender"]}&whichclass={a["Class"]}&whichpath={a["Path"]}&asctype={a["Type"]}&nopetok=1&noskillsok=1&lamesignok=1&lamepatok=1`,true,true);
