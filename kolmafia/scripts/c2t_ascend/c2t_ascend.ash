@@ -101,13 +101,13 @@ void main() {
 	visit_url("afterlife.php?action=pearlygates",false,true);
 
 	//buy things
-	if (a["Deli"].to_int() > 0)
+	if (a["Deli"] > 0)
 		visit_url(`afterlife.php?action=buydeli&whichitem={a["Deli"]}`,true,true);
-	if (a["Pet"].to_int() > 0)
+	if (a["Pet"] > 0)
 		visit_url(`afterlife.php?action=buyarmory&whichitem={a["Pet"]}`,true,true);
 
-	//hc perm all the skills; assumes enough karma to cover costs
-	if (perm == "hc" || perm == "sc") {
+	//perm skills
+	if (multi > 0) {
 		buffer buf = visit_url("afterlife.php?place=permery",false,true);
 		string [int] hcsc = xpath(buf,'//form[@action="afterlife.php"]//input[@name="action"]/@value');
 		string [int] skil = xpath(buf,'//form[@action="afterlife.php"]//input[@name="whichskill"]/@value');
@@ -116,7 +116,7 @@ void main() {
 			print(`c2t_ascend: perming all {c2t_ascend_data[7].data[multi]} skills`);
 			for i from 0 to size-1 {
 				if (get_property("bankedKarma").to_int() - 100 * multi < threshold) {
-					print("c2t_ascend: perming another skill would put karma below the threshold, so stopping");
+					print(`c2t_ascend: perming another skill would put karma below the threshold of {threshold}, so stopping`);
 					break;
 				}
 				if (hcsc[i] == `{perm}perm`)
