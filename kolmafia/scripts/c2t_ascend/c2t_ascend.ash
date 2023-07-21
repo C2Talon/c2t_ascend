@@ -10,6 +10,10 @@ record c2t_ascend_field {
 	string [int] data;
 };
 
+//for importing
+//returns true if successfully navigated valhalla
+boolean c2t_ascend();
+
 //check input
 boolean c2t_ascend_check();
 boolean c2t_ascend_check(string s);
@@ -70,7 +74,13 @@ c2t_ascend_field [int] c2t_ascend_data = {
 		)
 };
 
+//for the CLI
 void main() {
+	if (!c2t_ascend())
+		abort("c2t_ascend: see above for error");
+}
+
+boolean c2t_ascend() {
 	int [string] a = c2t_ascend_getSettings();
 	int multi = a["Perm"];
 	string perm = multi == 1?"sc":multi == 2?"hc":"";
@@ -90,12 +100,15 @@ void main() {
 		if (visit_url("ascend.php?pwd&action=ascend&confirm=on&confirm2=on",true,true)
 			.contains_text("You may not ascend while you have pending trade offers."))
 		{
-			abort("c2t_ascend: trade offers are pending; cannot ascend until those are dealt with");
+			print("c2t_ascend: trade offers are pending; cannot ascend until those are dealt with","red");
+			return false;
 		}
 	}
 
-	if (!visit_url("charpane.php").contains_text("Astral Spirit"))
-		abort("c2t_ascend: failed to get to valhalla");
+	if (!visit_url("charpane.php").contains_text("Astral Spirit")) {
+		print("c2t_ascend: failed to get to valhalla","red");
+		return false;
+	}
 
 	//visit_url("afterlife.php?realworld=1",false,true);
 	visit_url("afterlife.php?action=pearlygates",false,true);
@@ -129,6 +142,11 @@ void main() {
 
 	//ascend
 	visit_url(`afterlife.php?pwd&action=ascend&confirmascend=1&whichsign={a["Moon"]}&gender={a["Gender"]}&whichclass={a["Class"]}&whichpath={a["Path"]}&asctype={a["Type"]}&nopetok=1&noskillsok=1&lamesignok=1&lamepatok=1`,true,true);
+
+	if (!get_property("kingLiberated").to_boolean())
+		return true;
+	print("c2t_ascend: still stuck in Valhalla","red");
+	return false;
 }
 
 string [int] c2t_ascend_type() {
