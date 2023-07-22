@@ -8,7 +8,14 @@ import <c2t_ascend.ash>
 string [string] POST = form_fields();
 boolean postError = false;
 
+record checkbox {
+	string name;
+	string desc;
+	boolean value;
+};
+
 void c2t_ascend_writeText(string tag,string s);
+void c2t_ascend_writeCheckbox(checkbox thing);
 void c2t_ascend_writeInput(string name,string value,string desc,int size,int max);
 void c2t_ascend_writeSelect(string name,string desc,string [int] options,int value);
 void c2t_ascend_writeFailSuccess();
@@ -16,21 +23,29 @@ void c2t_ascend_writeTh(string a, string b, string c);
 
 void main() {
 	int [string] settings;
+	checkbox block = new checkbox("skip starter skills","skip perming free 0th-level class skills (and cleesh)");
 
 	//handle things submitted
 	if (POST.count() > 1) {
 		foreach i,x in c2t_ascend_data
 			settings[x.name] = POST[x.name].to_int();
+		block.value = POST[block.name] == "on" ? true : false;
 		if (!c2t_ascend_check(settings))
 			postError = true;
-		if (!postError)
+		if (!postError) {
 			c2t_ascend_setSettings(settings);
+			set_property("c2t_ascend_useBlocklist",block.value);
+		}
 	}
-	else if (c2t_ascend_check())
+	else if (c2t_ascend_check()) {
 		settings = c2t_ascend_getSettings();
-	else
+		block.value = get_property("c2t_ascend_useBlocklist").to_boolean();
+	}
+	else {
 		foreach i,x in c2t_ascend_data
 			settings[x.name] = 0;
+		block.value = get_property("c2t_ascend_useBlocklist").to_boolean();
+	}
 
 	//header
 	write('<!DOCTYPE html><html lang="EN"><head><title>c2t_ascend Settings</title>');
@@ -56,12 +71,13 @@ void main() {
 		else
 			c2t_ascend_writeSelect(x.name,x.desc,x.data,settings[x.name]);
 	}
+	c2t_ascend_writeCheckbox(block);
 	write("</tbody></table>");
 
 	//submit
 	write('<input type="submit" value="save changes" class="submit" />');
-	c2t_ascend_writeFailSuccess();
 	write("</form>");
+	c2t_ascend_writeFailSuccess();
 
 	//footer
 	write("</body></html>");
@@ -69,6 +85,11 @@ void main() {
 
 void c2t_ascend_writeText(string tag,string s) {
 	write(`<{tag}>{s}</{tag.split_string(" ")[0]}>`);
+}
+
+void c2t_ascend_writeCheckbox(checkbox thing) {
+	string check = thing.value ? ' checked="checked"' : '';
+	write(`<tr><td class="right"><input type="checkbox" name="{thing.name}" id="{thing.name}"{check} /></td><td><label for="{thing.name}"><code>{thing.name}</code></label></td><td>{thing.desc}</td></tr>`);
 }
 
 void c2t_ascend_writeInput(string name,string value,string desc,int size,int max) {

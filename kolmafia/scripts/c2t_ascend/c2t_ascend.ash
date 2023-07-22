@@ -34,6 +34,9 @@ string [int] c2t_ascend_deli();
 string [int] c2t_ascend_pet();
 string [int] c2t_ascend_perm();
 
+//skill perm blocklist
+boolean [string] c2t_ascend_blocklist();
+
 //data
 c2t_ascend_field [int] c2t_ascend_data = {
 	new c2t_ascend_field(
@@ -125,6 +128,7 @@ boolean c2t_ascend() {
 		string [int] hcsc = xpath(buf,'//form[@action="afterlife.php"]//input[@name="action"]/@value');
 		string [int] skil = xpath(buf,'//form[@action="afterlife.php"]//input[@name="whichskill"]/@value');
 		int size = skil.count();
+		boolean [string] blocklist = c2t_ascend_blocklist();
 		if (size > 0) {
 			print(`c2t_ascend: perming all {c2t_ascend_data[7].data[multi]} skills`);
 			for i from 0 to size-1 {
@@ -132,8 +136,11 @@ boolean c2t_ascend() {
 					print(`c2t_ascend: perming another skill would put karma below the threshold of {threshold}, so stopping`);
 					break;
 				}
-				if (hcsc[i] == `{perm}perm`)
+				if (hcsc[i] == `{perm}perm`
+					&& !(blocklist contains skil[i]))
+				{
 					visit_url(`afterlife.php?action={hcsc[i]}&whichskill={skil[i]}`,true,true);
+				}
 			}
 		}
 	}
@@ -264,5 +271,33 @@ boolean c2t_ascend_setSettings(int [string] map) {
 		temp += temp == ""?`{map[x.name]}`:`,{map[x.name]}`;
 	set_property("c2t_ascend",temp);
 	return true;
+}
+
+boolean [string] c2t_ascend_blocklist() {
+	boolean [string] out;
+	if (!get_property("c2t_ascend_useBlocklist").to_boolean())
+		return out;
+
+	int i = 0;
+	foreach x in $skills[
+		seal clubbing frenzy,
+		clobber,
+		patience of the tortoise,
+		toss,
+		manicotti meditation,
+		spaghetti spear,
+		sauce contemplation,
+		salsaball,
+		disco aerobics,
+		suckerpunch,
+		moxie of the mariachi,
+		sing,
+		cleesh,
+		mild curse
+		]
+	{
+		out[x.id.to_string()] = true;
+	}
+	return out;
 }
 
