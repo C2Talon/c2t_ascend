@@ -3,16 +3,14 @@
 
 //automates entering and leaving valhalla, as well as choosing options within
 
+boolean c2t_ascend_CLI = false;
+
 //record for the data
 record c2t_ascend_field {
 	string name;
 	string desc;
 	string [int] data;
 };
-
-//for importing
-//returns true if successfully navigated valhalla
-boolean c2t_ascend();
 
 //check input
 boolean c2t_ascend_check();
@@ -77,10 +75,17 @@ c2t_ascend_field [int] c2t_ascend_data = {
 		)
 };
 
+//handles errors with aborting if done via CLI or returning false otherwise
+boolean c2t_ascend_error(string s);
+
+//for importing
+//returns true if successfully navigated valhalla
+boolean c2t_ascend();
+
 //for the CLI
 void main() {
-	if (!c2t_ascend())
-		abort("c2t_ascend: see above for error");
+	c2t_ascend_CLI = true;
+	c2t_ascend();
 }
 
 boolean c2t_ascend() {
@@ -88,9 +93,10 @@ boolean c2t_ascend() {
 	int multi = a["Perm"];
 	string perm = multi == 1?"sc":multi == 2?"hc":"";
 	int threshold = a["Karma"];
+	buffer buf;
 
 	if (get_property("kingLiberated").to_boolean()) {
-		print("c2t_ascend: attempting to enter valhalla");
+		print("c2t_ascend: attempting to enter Valhalla");
 
 		//get to ascend button
 		if (get_property("csServicesPerformed") != "")
@@ -103,15 +109,12 @@ boolean c2t_ascend() {
 		if (visit_url("ascend.php?pwd&action=ascend&confirm=on&confirm2=on",true,true)
 			.contains_text("You may not ascend while you have pending trade offers."))
 		{
-			print("c2t_ascend: trade offers are pending; cannot ascend until those are dealt with","red");
-			return false;
+			return c2t_ascend_error("trade offers are pending; cannot ascend until those are dealt with");
 		}
 	}
 
-	if (!visit_url("charpane.php").contains_text("Astral Spirit")) {
-		print("c2t_ascend: failed to get to valhalla","red");
-		return false;
-	}
+	if (!visit_url("charpane.php").contains_text("Astral Spirit"))
+		return c2t_ascend_error("failed to get to Valhalla");
 
 	//visit_url("afterlife.php?realworld=1",false,true);
 	visit_url("afterlife.php?action=pearlygates",false,true);
@@ -124,7 +127,7 @@ boolean c2t_ascend() {
 
 	//perm skills
 	if (multi > 0) {
-		buffer buf = visit_url("afterlife.php?place=permery",false,true);
+		buf = visit_url("afterlife.php?place=permery",false,true);
 		string [int] hcsc = xpath(buf,'//form[@action="afterlife.php"]//input[@name="action"]/@value');
 		string [int] skil = xpath(buf,'//form[@action="afterlife.php"]//input[@name="whichskill"]/@value');
 		int size = skil.count();
@@ -145,15 +148,16 @@ boolean c2t_ascend() {
 		}
 	}
 
-	print("c2t_ascend: leaving valhalla");
+	print("c2t_ascend: leaving Valhalla");
 
 	//ascend
-	visit_url(`afterlife.php?pwd&action=ascend&confirmascend=1&whichsign={a["Moon"]}&gender={a["Gender"]}&whichclass={a["Class"]}&whichpath={a["Path"]}&asctype={a["Type"]}&nopetok=1&noskillsok=1&lamesignok=1&lamepatok=1`,true,true);
+	buf = visit_url(`afterlife.php?pwd&action=ascend&confirmascend=1&whichsign={a["Moon"]}&gender={a["Gender"]}&whichclass={a["Class"]}&whichpath={a["Path"]}&asctype={a["Type"]}&nopetok=1&noskillsok=1&lamesignok=1&lamepatok=1`,true,true);
 
-	if (!get_property("kingLiberated").to_boolean())
-		return true;
-	print("c2t_ascend: still stuck in Valhalla","red");
-	return false;
+	//check if still in Valhalla
+	if (buf.contains_text("<p>&quot;Okay, kid, lemme see if I've got this straight:"))
+		return c2t_ascend_error("still stuck in Valhalla");
+
+	return true;
 }
 
 string [int] c2t_ascend_type() {
@@ -278,7 +282,6 @@ boolean [string] c2t_ascend_blocklist() {
 	if (!get_property("c2t_ascend_useBlocklist").to_boolean())
 		return out;
 
-	int i = 0;
 	foreach x in $skills[
 		seal clubbing frenzy,
 		clobber,
@@ -299,5 +302,13 @@ boolean [string] c2t_ascend_blocklist() {
 		out[x.id.to_string()] = true;
 	}
 	return out;
+}
+
+boolean c2t_ascend_error(string s) {
+	string out = `c2t_ascend: {s}`;
+	if (c2t_ascend_CLI)
+		abort(out);
+	print(out,"red");
+	return false;
 }
 
