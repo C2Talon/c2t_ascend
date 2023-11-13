@@ -130,12 +130,20 @@ boolean c2t_ascend() {
 		buf = visit_url("afterlife.php?place=permery",false,true);
 		string [int] hcsc = xpath(buf,'//form[@action="afterlife.php"]//input[@name="action"]/@value');
 		string [int] skil = xpath(buf,'//form[@action="afterlife.php"]//input[@name="whichskill"]/@value');
+		string [int] button = xpath(buf,'//form[@action="afterlife.php"]//input[@type="submit"]/@value');
+		matcher m;
+		int cost;
+
 		int size = skil.count();
 		boolean [string] blocklist = c2t_ascend_blocklist();
 		if (size > 0) {
 			print(`c2t_ascend: perming all {c2t_ascend_data[7].data[multi]} skills`);
 			for i from 0 to size-1 {
-				if (get_property("bankedKarma").to_int() - 100 * multi < threshold) {
+				m = create_matcher('Permanent\\s+\\((\\d+)\\s+Karma\\)',button[i]);
+				m.find();
+				cost = m.group(1).to_int();
+
+				if (get_property("bankedKarma").to_int() - cost < threshold) {
 					print(`c2t_ascend: perming another skill would put karma below the threshold of {threshold}, so stopping`);
 					break;
 				}
