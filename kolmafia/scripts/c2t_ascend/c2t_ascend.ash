@@ -95,29 +95,39 @@ boolean c2t_ascend() {
 	int threshold = a["Karma"];
 	buffer buf;
 
-	if (get_property("kingLiberated").to_boolean()) {
-		print("c2t_ascend: attempting to enter Valhalla");
+	print("c2t_ascend: attempting to enter Valhalla");
 
-		//get to ascend button
-		if (get_property("csServicesPerformed") != "")
-			visit_url("ascend.php?alttext=communityservice",false,true);
-		else
-			visit_url("ascend.php",false,true);
+	//get to ascend button
+	if (get_property("csServicesPerformed") != "")
+		buf = visit_url("ascend.php?alttext=communityservice",false,true);
+	else
+		buf = visit_url("ascend.php",false,true);
 
+	//result is empty
+	if (buf == "".to_buffer())
+		return c2t_ascend_error("The ascend page is empty. Did you free the king yet?");
+
+	//ascending too soon
+	if (buf.contains_text("You may not enter the Astral Gash again until tomorrow."))
+		return c2t_ascend_error("You may not enter the Astral Gash again until tomorrow.");
+
+	//check if already in Valhalla, and get there if not
+	if (!buf.contains_text("<b>Beyond the Pale</b>")) {
 		//press ascend button
-		//TODO log and decline trade offers
-		if (visit_url("ascend.php?pwd&action=ascend&confirm=on&confirm2=on",true,true)
-			.contains_text("You may not ascend while you have pending trade offers."))
-		{
-			return c2t_ascend_error("trade offers are pending; cannot ascend until those are dealt with");
-		}
+		buf = visit_url("ascend.php?pwd&action=ascend&confirm=on&confirm2=on",true,true);
+
+		//trade offers
+		if (buf.contains_text("You may not ascend while you have pending trade offers."))
+			return c2t_ascend_error("You may not ascend while you have pending trade offers.");
+
+		//are we there yet?
+		if (!buf.contains_text("<b>Beyond the Pale</b>"))
+			return c2t_ascend_error("failed to enter Valhalla");
 	}
 
-	if (!visit_url("charpane.php").contains_text("Astral Spirit"))
-		return c2t_ascend_error("failed to get to Valhalla");
-
-	//visit_url("afterlife.php?realworld=1",false,true);
-	visit_url("afterlife.php?action=pearlygates",false,true);
+	//click link and enter
+	if (buf.contains_text("afterlife.php?action=pearlygates"))
+		visit_url("afterlife.php?action=pearlygates",false,true);
 
 	//buy things
 	if (a["Deli"] > 0)
