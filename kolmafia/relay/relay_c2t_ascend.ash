@@ -65,7 +65,8 @@ void main() {
 	write("<table>");
 	c2t_ascend_writeTh("value","setting","description");
 	write("<tbody>");
-	foreach i,x in c2t_ascend_data {
+	foreach i in $ints[0,3,1,2,4,5,6,7,8] {
+		c2t_ascend_field x = c2t_ascend_data[i];
 		if (x.name == "Karma")
 			c2t_ascend_writeInput(x.name,settings[x.name],x.desc,10,10);
 		else
