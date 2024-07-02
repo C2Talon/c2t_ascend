@@ -12,6 +12,7 @@ Kolmafia script written in ASH to automate valhalla, to include entering valhall
 * There are no checks for combinations of values that may not be valid server input, so don't choose things you don't have access to, or try to enter an Ed run as a Seal Clubber as an example. I have no idea what will happen.
 * It is suggested to have a pre-ascension script of some sort set to run on ascension that checks to make sure you are in a state you want to be in for ascension, so, for example, you don't accidentally just blow through valhalla without running any turns for the day.
 * The auto-perm skills in valhalla feature will perm skills from the top of the list down without regard with how good or useful a skill is, so if that is not a behavior you want, just keep it off via the `Perm` setting.
+* Trade offers can be auto-declined and stored to be viewed later via options in the relay script.
 
 ## Installation / Removal
 

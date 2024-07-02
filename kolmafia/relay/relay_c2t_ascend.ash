@@ -11,6 +11,7 @@ boolean postError = false;
 record checkbox {
 	string name;
 	string desc;
+	string prop;
 	boolean value;
 };
 
@@ -23,28 +24,39 @@ void c2t_ascend_writeTh(string a, string b, string c);
 
 void main() {
 	int [string] settings;
-	checkbox block = new checkbox("skip starter skills","skip perming free 0th-level class skills (and cleesh)");
+	checkbox block = new checkbox("skip starter skills","skip perming free 0th-level class skills (and cleesh)","c2t_ascend_useBlocklist");
+	checkbox tradeDecline = new checkbox("auto-decline trades","decline all trade offers when ascending","c2t_ascend_tradeDecline");
+	checkbox tradeStore = new checkbox("store trades","if trades are declined, store a page of the trade offers in the data folder","c2t_ascend_tradeStore");
+	checkbox[int] checkboxes = {
+		block,
+		tradeDecline,
+		tradeStore,
+		};
 
 	//handle things submitted
 	if (POST.count() > 1) {
 		foreach i,x in c2t_ascend_data
 			settings[x.name] = POST[x.name].to_int();
-		block.value = POST[block.name] == "on" ? true : false;
+		foreach i,x in checkboxes
+			x.value = POST[x.name] == "on" ? true : false;
 		if (!c2t_ascend_check(settings))
 			postError = true;
 		if (!postError) {
 			c2t_ascend_setSettings(settings);
-			set_property("c2t_ascend_useBlocklist",block.value);
+			foreach i,x in checkboxes
+				set_property(x.prop,x.value);
 		}
 	}
 	else if (c2t_ascend_check()) {
 		settings = c2t_ascend_getSettings();
-		block.value = get_property("c2t_ascend_useBlocklist").to_boolean();
+		foreach i,x in checkboxes
+			x.value = get_property(x.prop).to_boolean();
 	}
 	else {
 		foreach i,x in c2t_ascend_data
 			settings[x.name] = 0;
-		block.value = get_property("c2t_ascend_useBlocklist").to_boolean();
+		foreach i,x in checkboxes
+			x.value = get_property(x.prop).to_boolean();
 	}
 
 	//header
@@ -72,7 +84,8 @@ void main() {
 		else
 			c2t_ascend_writeSelect(x.name,x.desc,x.data,settings[x.name]);
 	}
-	c2t_ascend_writeCheckbox(block);
+	foreach i,x in checkboxes
+		c2t_ascend_writeCheckbox(x);
 	write("</tbody></table>");
 
 	//submit

@@ -78,6 +78,16 @@ c2t_ascend_field [int] c2t_ascend_data = {
 //handles errors with aborting if done via CLI or returning false otherwise
 boolean c2t_ascend_error(string s);
 
+//print
+void c2t_ascend_print(string s);
+
+//decline trades
+boolean c2t_ascend_tradeDecline();
+
+//various pages used
+buffer c2t_ascend_pageFindButton();
+buffer c2t_ascend_pagePushButton();
+
 //for importing
 //returns true if successfully navigated valhalla
 boolean c2t_ascend();
@@ -95,13 +105,10 @@ boolean c2t_ascend() {
 	int threshold = a["Karma"];
 	buffer buf;
 
-	print("c2t_ascend: attempting to enter Valhalla");
+	c2t_ascend_print("attempting to enter Valhalla");
 
 	//get to ascend button
-	if (get_property("csServicesPerformed") != "")
-		buf = visit_url("ascend.php?alttext=communityservice",false,true);
-	else
-		buf = visit_url("ascend.php",false,true);
+	buf = c2t_ascend_pageFindButton();
 
 	//result is empty
 	if (buf == "".to_buffer())
@@ -114,11 +121,17 @@ boolean c2t_ascend() {
 	//check if already in Valhalla, and get there if not
 	if (!buf.contains_text("<b>Beyond the Pale</b>")) {
 		//press ascend button
-		buf = visit_url("ascend.php?pwd&action=ascend&confirm=on&confirm2=on",true,true);
+		buf = c2t_ascend_pagePushButton();
 
 		//trade offers
-		if (buf.contains_text("You may not ascend while you have pending trade offers."))
-			return c2t_ascend_error("You may not ascend while you have pending trade offers.");
+		if (buf.contains_text("You may not ascend while you have pending trade offers.")) {
+			if (!c2t_ascend_tradeDecline())
+				return c2t_ascend_error("You may not ascend while you have pending trade offers.");
+
+			//try to ascend again after trades declined
+			c2t_ascend_pageFindButton();
+			buf = c2t_ascend_pagePushButton();
+		}
 
 		//are we there yet?
 		if (!buf.contains_text("<b>Beyond the Pale</b>"))
@@ -147,14 +160,14 @@ boolean c2t_ascend() {
 		int size = skil.count();
 		boolean [string] blocklist = c2t_ascend_blocklist();
 		if (size > 0) {
-			print(`c2t_ascend: perming all {c2t_ascend_data[7].data[multi]} skills`);
+			c2t_ascend_print(`perming all {c2t_ascend_data[7].data[multi]} skills`);
 			for i from 0 to size-1 {
 				m = create_matcher('Permanent\\s+\\((\\d+)\\s+Karma\\)',button[i]);
 				m.find();
 				cost = m.group(1).to_int();
 
 				if (get_property("bankedKarma").to_int() - cost < threshold) {
-					print(`c2t_ascend: perming another skill would put karma below the threshold of {threshold}, so stopping`);
+					c2t_ascend_print(`perming another skill would put karma below the threshold of {threshold}, so stopping`);
 					break;
 				}
 				if (hcsc[i] == `{perm}perm`
@@ -166,7 +179,7 @@ boolean c2t_ascend() {
 		}
 	}
 
-	print("c2t_ascend: leaving Valhalla");
+	c2t_ascend_print("leaving Valhalla");
 
 	//ascend
 	buf = visit_url(`afterlife.php?pwd&action=ascend&confirmascend=1&whichsign={a["Moon"]}&gender={a["Gender"]}&whichclass={a["Class"]}&whichpath={a["Path"]}&asctype={a["Type"]}&nopetok=1&noskillsok=1&lamesignok=1&lamepatok=1`,true,true);
@@ -278,7 +291,7 @@ boolean c2t_ascend_check(int [string] map) {
 int [string] c2t_ascend_getSettings() {
 	int [string] out;
 	if (!c2t_ascend_check())
-		abort("c2t_ascend: property set up incorrectly; configure in the relay script to fix");
+		abort("c2t_ascend error: property set up incorrectly; configure in the relay script to fix");
 	string [int] spli = split_string(get_property("c2t_ascend"),",");
 	foreach i,x in c2t_ascend_data
 		out[x.name] = spli[i].to_int();
@@ -323,10 +336,46 @@ boolean [string] c2t_ascend_blocklist() {
 }
 
 boolean c2t_ascend_error(string s) {
-	string out = `c2t_ascend: {s}`;
+	string out = `c2t_ascend error: {s}`;
 	if (c2t_ascend_CLI)
 		abort(out);
 	print(out,"red");
 	return false;
+}
+
+void c2t_ascend_print(string s) {
+	print(`c2t_ascend: {s}`);
+}
+
+boolean c2t_ascend_tradeDecline() {
+	if (!get_property("c2t_ascend_tradeDecline").to_boolean())
+		return false;
+
+	buffer page = visit_url("makeoffer.php",false,true);
+
+	//keep a record of pending trade offers that are auto-declined
+	if (get_property("c2t_ascend_tradeStore").to_boolean()) {
+		string file = `{my_name().to_lower_case()}_{today_to_string()}_pending_trades.html`;
+		c2t_ascend_print(`storing current pending trade offers in "data/{file}"`);
+		buffer_to_file(page,file);
+	}
+
+	c2t_ascend_print("declining all trade offers");
+	matcher mat = create_matcher(`makeoffer\\.php\\?action=(cancel2?|decline)&whichoffer=\\d+`,page);
+	while (mat.find())
+		visit_url(mat.group(0),false,true);
+
+	return true;
+}
+
+buffer c2t_ascend_pageFindButton() {
+	if (get_property("csServicesPerformed") != "")
+		return visit_url("ascend.php?alttext=communityservice",false,true);
+	else
+		return visit_url("ascend.php",false,true);
+}
+
+buffer c2t_ascend_pagePushButton() {
+	return visit_url("ascend.php?pwd&action=ascend&confirm=on&confirm2=on",true,true);
 }
 
