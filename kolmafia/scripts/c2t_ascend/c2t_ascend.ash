@@ -119,7 +119,7 @@ boolean c2t_ascend() {
 		return c2t_ascend_error("You may not enter the Astral Gash again until tomorrow.");
 
 	//check if already in Valhalla, and get there if not
-	if (!buf.contains_text("<b>Beyond the Pale</b>")) {
+	if (!buf.contains_text(">Beyond the Pale</b>")) {
 		//press ascend button
 		buf = c2t_ascend_pagePushButton();
 
@@ -134,7 +134,7 @@ boolean c2t_ascend() {
 		}
 
 		//are we there yet?
-		if (!buf.contains_text("<b>Beyond the Pale</b>"))
+		if (!buf.contains_text(">Beyond the Pale</b>"))
 			return c2t_ascend_error("failed to enter Valhalla");
 	}
 
