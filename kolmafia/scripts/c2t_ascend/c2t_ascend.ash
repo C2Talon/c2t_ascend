@@ -182,7 +182,7 @@ boolean c2t_ascend() {
 	c2t_ascend_print("leaving Valhalla");
 
 	//ascend
-	buf = visit_url(`afterlife.php?pwd&action=ascend&confirmascend=1&whichsign={a["Moon"]}&gender={a["Gender"]}&whichclass={a["Class"]}&whichpath={a["Path"]}&asctype={a["Type"]}&nopetok=1&noskillsok=1&lamesignok=1&lamepatok=1`,true,true);
+	buf = visit_url(`afterlife.php?pwd&action=ascend&confirmascend=1&whichsign={a["Moon"]}&gender={a["Gender"]}&whichclass={a["Class"]}&whichpath={a["Path"]}&asctype={a["Type"]}&nopetok=1&noskillsok=1&lamesignok=1&lamepathok=1`,true,true);
 
 	//check if still in Valhalla
 	if (buf.contains_text("<p>&quot;Okay, kid, lemme see if I've got this straight:"))
